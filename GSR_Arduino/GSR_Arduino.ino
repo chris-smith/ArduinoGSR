@@ -1,3 +1,4 @@
+// GSR signal
 int signalPin = A0;
 
 void setup(){
@@ -6,8 +7,10 @@ void setup(){
 }
 
 void loop(){
+  // read values
   int signal = analogRead(signalPin);
   if (Serial.available() > 0) {
+    // check if data was requested
     byte inbyte=Serial.read();
     if(inbyte=='a'){
       sendToProcessing('S', signal);

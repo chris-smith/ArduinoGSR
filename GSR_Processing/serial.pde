@@ -17,6 +17,7 @@ void setCommandValue(String str) {
   // Sets Value for GSR, HR Based on string input
   // Serial command formatted as <char><value>
   // Values are human readable
+  //  Example: GSR sends S250
   try {
     // isolate command character
     String cmd_string = str.substring(0,1);
@@ -49,8 +50,9 @@ void setVals(String input) {
 }
 
 void setup_serial(int which) {  
-  // Sets up GSR, HR Serial Ports
-  // Some amount of uncommenting required to get HR to work
+  // Sets up GSR, HR Serial Ports. Called by void _init()
+  // If HR is distinct serial connection, wome amount of 
+  // uncommenting/adjustment will be required to get HR to work
   
   // which == 0 -> gsr
   // which == 1 -> hr
