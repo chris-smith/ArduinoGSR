@@ -1,3 +1,14 @@
+/*
+  Chris Smith -- Boston Children's Hospital for Jason Kahn
+
+  This is the program to run on the arduino for use with the GSR
+  Processing sketch. The signal from your GSR circuit should be
+  sent into pin A0. This sketch reports its data to a serial device
+  when it receives an 'a'
+
+*/
+
+
 // GSR signal
 int signalPin = A0;
 
@@ -13,7 +24,7 @@ void loop(){
     // check if data was requested
     byte inbyte=Serial.read();
     if(inbyte=='a'){
-      sendToProcessing('S', signal);
+      sendToProcessing('G', signal);
     }
   }
 }

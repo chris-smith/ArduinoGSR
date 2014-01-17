@@ -1,4 +1,4 @@
-
+// rudimentary keyboard input -- alphanumeric, enter, delete
 void keyPressed(){
   // Keyboard events
   if (!listenToKeyboard) {
@@ -6,11 +6,14 @@ void keyPressed(){
     lastKey = key;
     return;
   }
+  // else
   if (key == ENTER || key == RETURN){
     inputComplete = true;
     //userInput = "ENTER";
   }
   else if (key == ESC){
+    // program is going to shutdown, stop any loops
+    // by saying input is finished
     inputComplete = true;
     //userInput = "ESC";
   }
@@ -20,10 +23,12 @@ void keyPressed(){
   }
   else if (isAllowed(key))
     userInput += key;
+  // else
+  //   do nothing
 }
 
 boolean isAllowed(char c) {
-  // checks if character is valid -- alphanumeric & '_'
+  // returns true if character is valid -- alphanumeric & '_'
   if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_')
     return true;
   else if (c >= '0' && c <= '9')   
@@ -32,7 +37,7 @@ boolean isAllowed(char c) {
 }
 
 boolean isNum(String str) {
-  // checks if the string is purely numeric
+  // returns true if the string is purely numeric
   return (match(str, "[0-9]") != null);
 }
 

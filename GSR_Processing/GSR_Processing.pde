@@ -1,48 +1,77 @@
+/*
+
+  Chris Smith -- Boston Children's Hospital for Jason Kahn
+  
+  This sketch works with the GSR arduino sketch to provide
+  real-time feedback on GSR readings and to save that data
+  for future examination. It is also meant to be used with  
+  a HR monitor to validate GSR performance -- this work is
+  only partially completed.
+  
+  For normal operation, it may be necessary to adjust the
+  values of gsrMax and gsrMin -- the expected maximum and
+  minimum values you'd get from your GSR -- which are used
+  to scale the drawing of the graph
+  
+*/
+
 import processing.serial.*;
 Serial gsrPort;    // arduino port
 Serial hrPort;
 PFont font;
 PrintWriter output;
 
+// holds data used for drawing graphs
 int hPosition = width*2;    // horizontal position on graph
 int gsrVal;
 int gsrLast;
 int hrVal;
 int hrLast;
 
-// Approximate GSR minimum and maximum expected readings
-// referenced for drawing graph -- change to adjust scale
-int gsrMax = 300;  
-int gsrMin = 50;
-
+// graph colors
 color gsrColor = color(255,0,0);
 color hrColor = color(0,0,255);
 
 int graph_height;  //  height of graph window
 int graph_offset;  //  y-offset of graph window
 
+// used to read serial, user input
 String serial_string = "";
 boolean serial_input = false;
 char lastKey;
 String userInput = "";
 boolean listenToKeyboard = false;
-boolean showPower = false;
 boolean inputComplete = false;
-boolean initialized = false;
 int flash = 0;
 
+boolean initialized = false;
 String fileName = "";
 int lf = 10;      // ASCII linefeed 
 
+
+/*----------------------------------------------------------
+             You may need to change these values
+  ----------------------------------------------------------*/  
+
+// if true, will also plot HR data
+boolean plotHR = false;
+
+// Approximate GSR minimum and maximum expected readings
+// referenced for drawing graph -- change to adjust scale
+int gsrMax = 300;  
+int gsrMin = 50;
+
+/*---------------------------------------------------------*/
+
+
 void setup() {
   size(900, 600);
-  //println(Serial.list());
   
   font = loadFont("Arial-BoldMT-24.vlw");
   
   gsrVal = 0; gsrLast = 0;
-  hrVal = 5; hrLast = 0;
-  graph_height = (height*3/4); 
+  hrVal = 0; hrLast = 0;
+  graph_height = (height*3/4);   // 450
   graph_offset = (height - graph_height) / 2;
   
   background(255);
@@ -58,34 +87,28 @@ void draw() {
   }
   else { 
     listenToKeyboard = false;
-    textAlign(CENTER, CENTER);
-    //delay(50);
+
+    // update horizontal position on graph
     if (hPosition >= width) {
       // move to left edge. draw over old graph
       hPosition = 1;
-      hrVal += 10;
-      // cover last drawing
-      fill(255,200);
+      // partially cover last drawing
+      fill(255,200);  // greyscale, alpha
       noStroke();
       rect(0,graph_offset,width,graph_height);
     }
-    else {
+    else
       hPosition++;
-    }
     
-    /*fill(255);
-    noStroke();
-    rect(0,0,100,100);
-    fill(0);
-    text(gsrVal, 20, 20);
-    text(gsrScale(gsrVal), 40, 40);*/
-    
+    // Draw the graphs
     strokeWeight(.5);
     stroke( gsrColor );
     line(hPosition-1, height/2-gsrScale(gsrLast), hPosition, height/2-gsrScale(gsrVal));
     stroke( hrColor );
-    line(hPosition-1, height/2-hrLast, hPosition, height/2-hrVal);
+    if (plotHR)
+      line(hPosition-1, height/2-hrLast, hPosition, height/2-hrVal);
     
+    // write data to file
     writeToFile(gsrVal, hrVal);
     gsrLast = gsrVal;
     hrLast = hrVal;
@@ -94,7 +117,7 @@ void draw() {
     gsrPort.write('a');
     delay(10);
     setVals(serial_string);
-    //delay(500);
+    
     drawKey();
   }
   
@@ -103,12 +126,12 @@ void draw() {
 int gsrScale(int val) {
   // scales gsr values for drawing graph
   
-  int new_val;
-  // reference value to middle of range gsrRange
-  new_val =  val - (gsrMax - gsrMin) / 2;
-  // scale to graph_height
-  new_val = graph_height * (new_val - gsrMin) / gsrMax;
-  return constrain(new_val, -graph_height/2, graph_height/2);
+  // scale range to graph_height
+  val = graph_height * ( val - gsrMin ) / (gsrMax - gsrMin );
+  // reference to middle of graph
+  //  gsrMax will be at graph_height / 2
+  val -= graph_height / 2;
+  return constrain( val, -graph_height/2+1, graph_height/2-1 );
 }
 
 void _init() {
@@ -133,6 +156,7 @@ void _init() {
   noStroke();
   rect(0,0,width,height);
   fill(0);
+  // prompt user for input
   text("Please enter the file name to save this data to", width/2, height/2 - 50);
   if (flash < 30)
       val = "_";
@@ -141,16 +165,21 @@ void _init() {
   flash++;
   if (flash > 60)
     flash = 0;
+  // display input so far
   text(userInput + val, width/2, height/2);
   if (inputComplete) {
+    // user hit 'enter'
     initialized = true;
     fileName = userInput;
+    // remove file extension if found
+    //  shouldn't happen due to input verification
     int pos = fileName.indexOf('.');
     if (pos > -1)
       fileName = fileName.substring(0,pos);
     fill(255);
     noStroke();
     rect(0,0,width,height);
+    // create file output
     output = createWriter("data/"+fileName+".txt"); 
     drawKey();
     inputComplete = false;
